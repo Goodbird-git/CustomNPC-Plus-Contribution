@@ -11,7 +11,10 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.StringUtils;
 import noppes.npcs.config.ConfigMain;
 import noppes.npcs.controllers.data.AnimationData;
+import noppes.npcs.controllers.data.CustomModelData;
 import noppes.npcs.controllers.data.SkinOverlay;
+import noppes.npcs.entity.EntityCustomModel;
+import noppes.npcs.entity.EntityCustomNpc;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.entity.data.DataSkinOverlays;
 import noppes.npcs.util.ValueUtil;
@@ -37,17 +40,11 @@ public class DataDisplay {
 	public String texture = "customnpcs:textures/entity/humanmale/Steve.png";
 	public String cloakTexture = "";
 
-	public String model = "geckolib3:geo/npc.geo.json";
-	public String animFile = "custom:geo_npc.animation.json";
-	public String idleAnim = "";
-	public String walkAnim = "";
-	public String attackAnim = "";
-	public String hurtAnim = "";
-
 	public DataSkinOverlays skinOverlayData;
 	public long overlayRenderTicks = 0;
 
 	public AnimationData animationData;
+	public CustomModelData customModelData;
 
 	public String glowTexture = "";
 
@@ -74,6 +71,7 @@ public class DataDisplay {
 		skinOverlayData = new DataSkinOverlays(npc);
 		name = getRandomName();
 		animationData = new AnimationData(this);
+		customModelData = new CustomModelData();
 	}
 
 	public String getRandomName() {
@@ -88,14 +86,6 @@ public class DataDisplay {
 		nbttagcompound.setString("SkinUrl", url);
 		nbttagcompound.setString("Texture", texture);
 
-		// Custom Model
-		nbttagcompound.setString("Model", model);
-		nbttagcompound.setString("AnimFile", animFile);
-		nbttagcompound.setString("IdleAnim", idleAnim);
-		nbttagcompound.setString("WalkAnim", walkAnim);
-		nbttagcompound.setString("AttackAnim", attackAnim);
-		nbttagcompound.setString("HurtAnim", hurtAnim);
-
 		nbttagcompound.setString("CloakTexture", cloakTexture);
 		nbttagcompound.setByte("UsingSkinUrl", skinType);
 		nbttagcompound.setString("GlowTexture", glowTexture);
@@ -103,6 +93,10 @@ public class DataDisplay {
 		nbttagcompound = skinOverlayData.writeToNBT(nbttagcompound);
 
 		nbttagcompound = animationData.writeToNBT(nbttagcompound);
+
+		if(npc instanceof EntityCustomNpc)
+			if(((EntityCustomNpc)npc).modelData.getEntity(npc) != null && ((EntityCustomNpc)npc).modelData.getEntity(npc) instanceof EntityCustomModel)
+				nbttagcompound = customModelData.writeToNBT(nbttagcompound);
 
 		if (this.playerProfile != null)
         {
@@ -158,15 +152,6 @@ public class DataDisplay {
 
 		texture = nbttagcompound.getString("Texture");
 
-		// Custom Model
-		model = nbttagcompound.getString("Model");
-		animFile = nbttagcompound.getString("AnimFile");
-		idleAnim = nbttagcompound.getString("IdleAnim");
-		walkAnim = nbttagcompound.getString("WalkAnim");
-		hurtAnim = nbttagcompound.getString("HurtAnim");
-		attackAnim = nbttagcompound.getString("AttackAnim");
-
-
 		cloakTexture = nbttagcompound.getString("CloakTexture");
 		glowTexture = nbttagcompound.getString("GlowTexture");
 
@@ -189,6 +174,8 @@ public class DataDisplay {
 		skinOverlayData.readFromNBT(nbttagcompound);
 
 		animationData.readFromNBT(nbttagcompound);
+
+		customModelData.readFromNBT(nbttagcompound);
 
 		modelSize = ValueUtil.clamp(nbttagcompound.getInteger("Size"), 1, Integer.MAX_VALUE);
 		if(modelSize > ConfigMain.NpcSizeLimit)

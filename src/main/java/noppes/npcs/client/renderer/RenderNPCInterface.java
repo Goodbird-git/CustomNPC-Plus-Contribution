@@ -247,7 +247,9 @@ public class RenderNPCInterface extends RenderLiving{
 			GL11.glRotatef(180, 1,0,0);
 			GL11.glTranslated(0, -1.5,0);
 			renderGeoModel(npc, npc.rotationYaw, Minecraft.getMinecraft().timer.renderPartialTicks);
+			npc.ignoreFrustumCheck = true; //TODO a switch in the settings for it
 		} else if (this.getEntityTexture(entityliving) != null) {
+			npc.ignoreFrustumCheck = false;
 			super.renderModel(entityliving, par2, par3, par4, par5, par6, par7);
 		}
 
@@ -333,8 +335,10 @@ public class RenderNPCInterface extends RenderLiving{
 
 	@Override
 	public ResourceLocation getEntityTexture(Entity entity) {
+		return getNpcTexture((EntityNPCInterface) entity);
+	}
 
-		EntityNPCInterface npc = (EntityNPCInterface) entity;
+	public static ResourceLocation getNpcTexture(EntityNPCInterface npc){
 		if (npc.textureLocation == null) {
 			if (npc.display.skinType == 0) {
 				if (npc instanceof EntityCustomNpc && ((EntityCustomNpc) npc).modelData.entityClass == null) {
@@ -380,7 +384,7 @@ public class RenderNPCInterface extends RenderLiving{
 		return npc.textureLocation;
 	}
 
-	private ResourceLocation adjustLocalTexture(EntityNPCInterface npc, ResourceLocation location) throws IOException {
+	private static ResourceLocation adjustLocalTexture(EntityNPCInterface npc, ResourceLocation location) throws IOException {
 		InputStream inputstream = null;
 
 		try {

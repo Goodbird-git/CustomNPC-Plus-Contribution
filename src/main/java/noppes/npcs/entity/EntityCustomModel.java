@@ -3,8 +3,10 @@ package noppes.npcs.entity;
 import net.minecraft.entity.EntityCreature;
 import net.minecraft.entity.ai.EntityAIWatchClosest;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
+import software.bernie.geckolib3.core.AnimationState;
 import software.bernie.geckolib3.core.IAnimatable;
 import software.bernie.geckolib3.core.IAnimationTickable;
 import software.bernie.geckolib3.core.PlayState;
@@ -25,24 +27,46 @@ public class EntityCustomModel extends EntityCreature implements IAnimatable, IA
     public String walkAnim = "";
     public String hurtAnim = "";
     public String attackAnim = "";
+    public String dialogAnim = "";
+    public AnimationBuilder manualAnim = new AnimationBuilder();
+    public ItemStack leftHeldItem;
+    public AnimationController<EntityCustomModel> dialogController;
+    public AnimationController<EntityCustomModel> manualController;
     private <E extends IAnimatable> PlayState predicateMovement(AnimationEvent<E> event) {
+        if(dialogController!=null && dialogController.getAnimationState()!= AnimationState.Stopped){
+            return PlayState.STOP;
+        }
+        if(manualController!=null && manualController.getAnimationState()!= AnimationState.Stopped){
+            return PlayState.STOP;
+        }
         if(!event.isMoving()){
             if(!Objects.equals(idleAnim, "")) {
                 event.getController().setAnimation(new AnimationBuilder().addAnimation(idleAnim, true));
+            }else{
+                return PlayState.STOP;
             }
         }else{
             if(!Objects.equals(idleAnim, "")) {
                 event.getController().setAnimation(new AnimationBuilder().addAnimation(walkAnim, true));
+            }else{
+                return PlayState.STOP;
             }
         }
-        //event.getController().setAnimation(new AnimationBuilder().addAnimation("animation.bat.fly", true));
+        return PlayState.CONTINUE;
+    }
+    private <E extends IAnimatable> PlayState predicateDialog(AnimationEvent<E> event) {
+        if(!Objects.equals(dialogAnim, "")) {
+            event.getController().setAnimation(new AnimationBuilder().addAnimation(dialogAnim, false));
+        }else{
+            return PlayState.STOP;
+        }
         return PlayState.CONTINUE;
     }
     private <E extends IAnimatable> PlayState predicateAttack(AnimationEvent<E> event) {
-        //event.getController().setAnimation(new AnimationBuilder().addAnimation("animation.bat.fly", true));
         return PlayState.CONTINUE;
     }
     private <E extends IAnimatable> PlayState predicateManual(AnimationEvent<E> event) {
+        event.getController().setAnimation(manualAnim);
         return PlayState.CONTINUE;
     }
 
@@ -57,7 +81,10 @@ public class EntityCustomModel extends EntityCreature implements IAnimatable, IA
     public void registerControllers(AnimationData data) {
         data.addAnimationController(new AnimationController<>(this, "movement", 10, this::predicateMovement));
         data.addAnimationController(new AnimationController<>(this, "attack", 10, this::predicateAttack));
-        data.addAnimationController(new AnimationController<>(this, "manual", 10, this::predicateManual));
+        dialogController = new AnimationController<>(this, "dialog", 10, this::predicateDialog);
+        data.addAnimationController(dialogController);
+        manualController = new AnimationController<>(this, "manual", 10, this::predicateManual);
+        data.addAnimationController(manualController);
     }
 
     @Override

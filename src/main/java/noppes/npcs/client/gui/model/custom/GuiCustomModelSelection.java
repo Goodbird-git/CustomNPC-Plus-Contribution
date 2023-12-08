@@ -51,7 +51,7 @@ public class GuiCustomModelSelection extends GuiNPCInterface {
 
     @Override
     public void doubleClicked(){
-        npc.display.model=slot.selected;
+        npc.display.customModelData.setModel(slot.selected);
         close();
         NoppesUtil.openGUI(player, parent);
     }

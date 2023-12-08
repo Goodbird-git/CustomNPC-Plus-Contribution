@@ -38,6 +38,8 @@ configurations {
 
 apply plugin: 'forge'
 
+compileJava.options.encoding = 'UTF-8'
+
 version = "1.9-beta3"
 group= "com.kamkeel.customnpc-plus" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = "CustomNPC-Plus"

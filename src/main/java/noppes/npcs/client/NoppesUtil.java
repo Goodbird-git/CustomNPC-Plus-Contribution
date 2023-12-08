@@ -5,6 +5,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.audio.PositionedSoundRecord;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
@@ -14,22 +15,28 @@ import net.minecraft.util.Util;
 import net.minecraft.world.World;
 import noppes.npcs.CustomNpcs;
 import noppes.npcs.Server;
+import noppes.npcs.api.handler.data.IAnimation;
 import noppes.npcs.client.fx.CustomFX;
 import noppes.npcs.client.gui.player.GuiDialogInteract;
 import noppes.npcs.client.gui.player.GuiQuestCompletion;
+import noppes.npcs.client.gui.player.moderndialog.GuiModernDialogInteract;
+import noppes.npcs.client.gui.player.moderndialog.GuiModernQuestDialog;
 import noppes.npcs.client.gui.util.GuiContainerNPCInterface;
 import noppes.npcs.client.gui.util.GuiNPCInterface;
 import noppes.npcs.client.gui.util.IScrollData;
 import noppes.npcs.client.gui.util.IScrollGroup;
+import noppes.npcs.constants.EnumDialogAnimationType;
 import noppes.npcs.constants.EnumGuiType;
 import noppes.npcs.constants.EnumPacketServer;
+import noppes.npcs.controllers.AnimationController;
 import noppes.npcs.controllers.DialogController;
-import noppes.npcs.controllers.data.Dialog;
-import noppes.npcs.controllers.data.Quest;
-import noppes.npcs.controllers.data.SkinOverlay;
+import noppes.npcs.controllers.data.*;
+import noppes.npcs.entity.EntityCustomModel;
+import noppes.npcs.entity.EntityCustomNpc;
 import noppes.npcs.entity.EntityNPCInterface;
 import noppes.npcs.scripted.ScriptParticle;
 import org.lwjgl.Sys;
+import software.bernie.geckolib3.resource.GeckoLibCache;
 
 import java.io.File;
 import java.io.IOException;
@@ -55,7 +62,7 @@ public class NoppesUtil {
 		float height = buffer.readFloat();
 		float width = buffer.readFloat();
 		float yOffset = buffer.readFloat();
-		
+
 		String particle = Server.readString(buffer);
 		World worldObj = Minecraft.getMinecraft().theWorld;
 
@@ -121,7 +128,7 @@ public class NoppesUtil {
 	}
 
 	public static void clickSound() {
-        Minecraft.getMinecraft().getSoundHandler().playSound(PositionedSoundRecord.func_147674_a(new ResourceLocation("gui.button.press"), 1.0F));    	
+        Minecraft.getMinecraft().getSoundHandler().playSound(PositionedSoundRecord.func_147674_a(new ResourceLocation("gui.button.press"), 1.0F));
 	}
 
 	private static EntityNPCInterface lastNpc;
@@ -135,7 +142,7 @@ public class NoppesUtil {
 	public static void openGUI(EntityPlayer player, Object guiscreen) {
 		CustomNpcs.proxy.openGui(player, guiscreen);
 	}
-	
+
 	public static void openFolder(File dir){
         String s = dir.getAbsolutePath();
 
@@ -196,19 +203,19 @@ public class NoppesUtil {
 			return;
 		Vector<String> data = new Vector<String>();
 		String line;
-		
+
 		try {
 			int size = buffer.readInt();
 			for(int i = 0; i < size; i++){
 				data.add(Server.readString(buffer));
 			}
 		} catch (Exception e) {
-			
+
 		}
-		
+
 		((IScrollData)gui).setData(data,null);
 	}
-	
+
 	private static HashMap<String,Integer> data = new HashMap<String,Integer>();
 	private static HashMap<String,Integer> group = new HashMap<String,Integer>();
 
@@ -259,7 +266,7 @@ public class NoppesUtil {
 		} catch (Exception e) {
 		}
 	}
-	
+
 	public static void setScrollData(ByteBuf buffer) {
 		GuiScreen gui = Minecraft.getMinecraft().currentScreen;
 		if(gui == null)
@@ -291,15 +298,47 @@ public class NoppesUtil {
 			NoppesUtil.openGUI(player, new GuiQuestCompletion(quest));
 		}
 	}
-	
+
 	public static void openDialog(NBTTagCompound compound, EntityNPCInterface npc, EntityPlayer player){
 		if(DialogController.Instance == null)
 			DialogController.Instance = new DialogController();
 		Dialog dialog = new Dialog();
 		dialog.readNBT(compound);
 		GuiScreen gui = Minecraft.getMinecraft().currentScreen;
-		if(gui == null || !(gui instanceof GuiDialogInteract))
-			CustomNpcs.proxy.openGui(player, new GuiDialogInteract(npc, dialog));
+		if(npc instanceof EntityCustomNpc){
+			EntityLivingBase entity = ((EntityCustomNpc)npc).modelData.getEntity(npc);
+			if(entity != null){
+				if(entity instanceof EntityCustomModel){
+                    if(dialog.animationType!=EnumDialogAnimationType.None){
+                        if(dialog.animationType!=EnumDialogAnimationType.Custom){
+                            ((EntityCustomModel) entity).dialogAnim = dialog.animationType.name();
+                        }else if(((EntityCustomModel) entity).animResLoc.toString().equals(dialog.animationFileResLoc) &&
+                                GeckoLibCache.getInstance().getAnimations().get(new ResourceLocation(dialog.animationFileResLoc))
+                                        .getAnimation(dialog.animationName)!=null){
+                            ((EntityCustomModel) entity).dialogAnim = dialog.animationName;
+                        }
+                    }
+				}
+			} else {
+                AnimationData data = npc.display.animationData;
+                if(dialog.animationType!= EnumDialogAnimationType.None && dialog.animationType!= EnumDialogAnimationType.Custom){
+					data.allowAnimation=true;
+					data.setEnabled(true);
+					data.animation= (Animation) AnimationController.Instance.get(dialog.animationType.name());
+					data.updateClient();
+                }
+			}
+		}
+		if(!(gui instanceof GuiDialogInteract) || ClientConfig.useCustomGUIDesign)
+			if(ClientConfig.useCustomGUIDesign){
+				if(dialog.hasQuest()){
+					CustomNpcs.proxy.openGui(player, new GuiModernQuestDialog(npc, dialog.getQuest(),dialog, -2));
+				}else{
+					CustomNpcs.proxy.openGui(player, new GuiModernDialogInteract(npc, dialog));
+				}
+			}else {
+				CustomNpcs.proxy.openGui(player, new GuiDialogInteract(npc, dialog));
+			}
 		else{
 			GuiDialogInteract dia = (GuiDialogInteract) gui;
 			dia.appendDialog(dialog);
@@ -309,20 +348,20 @@ public class NoppesUtil {
 		int x = compound.getInteger("x");
 		int y = compound.getInteger("y");
 		int z = compound.getInteger("z");
-		
+
 		TileEntity tile = player.worldObj.getTileEntity(x, y, z);
 		tile.readFromNBT(compound);
-		
+
 		CustomNpcs.proxy.openGui(x, y, z, EnumGuiType.RedstoneBlock, player);
 	}
 	public static void saveWayPointBlock(EntityPlayer player, NBTTagCompound compound){
 		int x = compound.getInteger("x");
 		int y = compound.getInteger("y");
 		int z = compound.getInteger("z");
-		
+
 		TileEntity tile = player.worldObj.getTileEntity(x, y, z);
 		tile.readFromNBT(compound);
-		
+
 		CustomNpcs.proxy.openGui(x, y, z, EnumGuiType.Waypoint, player);
 	}
 

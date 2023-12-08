@@ -7,6 +7,7 @@ import noppes.npcs.ICompatibilty;
 import noppes.npcs.VersionCompatibility;
 import noppes.npcs.api.handler.data.*;
 import noppes.npcs.config.ConfigMain;
+import noppes.npcs.constants.EnumDialogAnimationType;
 import noppes.npcs.constants.EnumOptionType;
 import noppes.npcs.controllers.DialogController;
 import noppes.npcs.controllers.QuestController;
@@ -23,6 +24,7 @@ public class Dialog implements ICompatibilty, IDialog {
 	public String text = "";
 	public int quest = -1;
 	public DialogCategory category;
+	public DialogColourData colourData = new DialogColourData();
 	public HashMap<Integer,DialogOption> options = new HashMap<Integer,DialogOption>();
 	public Availability availability = new Availability();
 	public FactionOptions factionOptions = new FactionOptions();
@@ -62,7 +64,11 @@ public class Dialog implements ICompatibilty, IDialog {
 	public int npcOffsetX, npcOffsetY;
 
 	public HashMap<Integer, IDialogImage> dialogImages = new HashMap<>();
-	
+	public EnumDialogAnimationType animationType = EnumDialogAnimationType.None;
+	public String animationFileResLoc = "";
+	public String animationName = "";
+	public int animationLoopType;
+
 	public boolean hasDialogs(EntityPlayer player) {
 		for(DialogOption option: options.values())
 			if(option != null && option.optionType == EnumOptionType.DialogOption && option.hasDialog() && option.isAvailable(player))
@@ -164,9 +170,17 @@ public class Dialog implements ICompatibilty, IDialog {
 			color = 0xe0e0e0;
 		if (!compound.hasKey("TitleColor"))
 			titleColor = 0xe0e0e0;
+		String animType = compound.getString("AnimationType");
+		animationType = animType.isEmpty() ?EnumDialogAnimationType.None:EnumDialogAnimationType.valueOf(animType);
+		if(animationType==EnumDialogAnimationType.Custom) {
+			animationFileResLoc = compound.getString("AnimationPath");
+			animationName = compound.getString("AnimationName");
+			animationLoopType = compound.getInteger("AnimationLoopType");
+		}
 
     	availability.readFromNBT(compound);
     	factionOptions.readFromNBT(compound);
+		colourData.readFromNBT(compound);
 	}
 
 
@@ -202,6 +216,7 @@ public class Dialog implements ICompatibilty, IDialog {
 		
     	availability.writeToNBT(compound);
     	factionOptions.writeToNBT(compound);
+		colourData.writeToNBT(compound);
 		compound.setInteger("ModRev", version);
 
 		compound.setInteger("Color", color);
@@ -225,6 +240,13 @@ public class Dialog implements ICompatibilty, IDialog {
 		compound.setFloat("NPCScale", npcScale);
 		compound.setInteger("NPCOffsetX", npcOffsetX);
 		compound.setInteger("NPCOffsetY", npcOffsetY);
+
+		compound.setString("AnimationType",animationType.name());
+		if(animationType==EnumDialogAnimationType.Custom) {
+			compound.setString("AnimationPath", animationFileResLoc);
+			compound.setString("AnimationName", animationName);
+			compound.setInteger("AnimationLoopType", animationLoopType);
+		}
 
 		NBTTagList images = new NBTTagList();
 		for (IDialogImage dialogImage : dialogImages.values()) {
@@ -284,7 +306,12 @@ public class Dialog implements ICompatibilty, IDialog {
 		dialog.npcOffsetX = npcOffsetX;
 		dialog.npcOffsetY = npcOffsetY;
 		dialog.dialogImages = dialogImages;
-		
+		dialog.animationType = animationType;
+		dialog.animationFileResLoc = animationFileResLoc;
+		dialog.animationName = animationName;
+		dialog.animationLoopType = animationLoopType;
+		dialog.colourData = colourData;
+
 		for(int slot : options.keySet()){
 			DialogOption option = options.get(slot);
 			if(option.optionType == EnumOptionType.DialogOption && (!option.hasDialog() || !option.isAvailable(player)))

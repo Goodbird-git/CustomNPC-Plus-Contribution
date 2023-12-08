@@ -1,15 +1,17 @@
 package noppes.npcs.client.gui;
 
 import net.minecraft.client.gui.GuiButton;
-import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.nbt.NBTTagCompound;
 import noppes.npcs.client.Client;
 import noppes.npcs.client.NoppesUtil;
-import noppes.npcs.client.gui.global.GuiNPCManageDialogs;
+import noppes.npcs.client.gui.model.custom.GuiCustomAnimFileSelection;
+import noppes.npcs.client.gui.model.custom.GuiCustomAnimationSelection;
 import noppes.npcs.client.gui.util.*;
 import noppes.npcs.config.ConfigMain;
+import noppes.npcs.constants.EnumDialogAnimationType;
 import noppes.npcs.constants.EnumPacketServer;
 import noppes.npcs.controllers.data.Dialog;
+import noppes.npcs.controllers.data.DialogColourData;
 import noppes.npcs.controllers.data.DialogImage;
 
 import java.util.ArrayList;
@@ -43,7 +45,9 @@ public class SubGuiNpcDialogVisual extends SubGuiInterface implements ISubGuiLis
         GuiMenuTopButton general =  new GuiMenuTopButton(1, guiLeft + 4, guiTop - 17, "General");
         GuiMenuTopButton spacing =  new GuiMenuTopButton(2, general.xPosition + general.getWidth(), guiTop - 17, "Spacing");
         GuiMenuTopButton images =  new GuiMenuTopButton(3, spacing.xPosition + spacing.getWidth(), guiTop - 17, "Images");
-        topButtons = new GuiMenuTopButton[]{general,images,spacing,close};
+        GuiMenuTopButton colours =  new GuiMenuTopButton(5, guiLeft + 4, guiTop - 34, "Colors");
+        GuiMenuTopButton animation =  new GuiMenuTopButton(4, images.xPosition + images.getWidth(), guiTop - 17, "Advanced");
+        topButtons = new GuiMenuTopButton[]{general,images,spacing,close,animation,colours};
         for(GuiMenuTopButton button : topButtons) {
             button.active = button.id == activeMenu;
             addButton(button);
@@ -243,6 +247,66 @@ public class SubGuiNpcDialogVisual extends SubGuiInterface implements ISubGuiLis
                 getButton(24).setVisible(dialogImage.imageType == 0);
                 getLabel(21).enabled = dialogImage.imageType == 0;
             }
+        } else if (activeMenu == 4) {
+            String[] values = new String[EnumDialogAnimationType.values().length];
+            for(int i = 0;i<values.length;i++){
+                values[i]=EnumDialogAnimationType.values()[i].name();
+            }
+            addButton(new GuiButtonBiDirectional(10, guiLeft + 120, y += 22,120,20, values,dialog.animationType.ordinal()));
+            addLabel(new GuiNpcLabel(10, "dialog.useAnim", guiLeft + 4, y + 5));
+            addButton(new GuiNpcButton(11, guiLeft + 4, y + 25, 120, 20, "Select animation file"));
+            getButton(11).setVisible(dialog.animationType==EnumDialogAnimationType.Custom);
+            getButton(11).setEnabled(dialog.animationType==EnumDialogAnimationType.Custom);
+            addButton(new GuiNpcButton(12, guiLeft + 4, y + 45, 120, 20, "Select dialog animation"));
+            getButton(12).setVisible(!dialog.animationFileResLoc.isEmpty());
+            getButton(12).setEnabled(!dialog.animationFileResLoc.isEmpty());
+        }
+        if (activeMenu == 5) {
+            addButton(new GuiNpcButtonYesNo(10, guiLeft + 180, y += 22,60,20, dialog.colourData.getEnableColourSettings()));
+            addLabel(new GuiNpcLabel(10, "dialog.enableColourSettings", guiLeft + 4, y + 5));
+            if(dialog.colourData.getEnableColourSettings()) {
+                String color = Integer.toHexString(dialog.colourData.getLineColour1());
+                while (color.length() < 6)
+                    color = 0 + color;
+                addButton(new GuiNpcButton(11, guiLeft + 180, y += 25, 60, 20, color));
+                addLabel(new GuiNpcLabel(11, "gui.lineColor1", guiLeft + 4, y + 5));
+                getButton(11).setTextColor(dialog.colourData.getLineColour1());
+
+                color = Integer.toHexString(dialog.colourData.getLineColour2());
+                while (color.length() < 6)
+                    color = 0 + color;
+                addButton(new GuiNpcButton(12, guiLeft + 180, y += 25, 60, 20, color));
+                addLabel(new GuiNpcLabel(12, "gui.lineColor2", guiLeft + 4, y + 5));
+                getButton(12).setTextColor(dialog.colourData.getLineColour2());
+
+                color = Integer.toHexString(dialog.colourData.getLineColour3());
+                while (color.length() < 6)
+                    color = 0 + color;
+                addButton(new GuiNpcButton(13, guiLeft + 180, y += 25, 60, 20, color));
+                addLabel(new GuiNpcLabel(13, "gui.lineColor3", guiLeft + 4, y + 5));
+                getButton(13).setTextColor(dialog.colourData.getLineColour3());
+
+                color = Integer.toHexString(dialog.colourData.getSlotColour());
+                while (color.length() < 6)
+                    color = 0 + color;
+                addButton(new GuiNpcButton(14, guiLeft + 180, y += 25, 60, 20, color));
+                addLabel(new GuiNpcLabel(14, "gui.slotColour", guiLeft + 4, y + 5));
+                getButton(14).setTextColor(dialog.colourData.getSlotColour());
+
+                color = Integer.toHexString(dialog.colourData.getButtonAcceptColour());
+                while (color.length() < 6)
+                    color = 0 + color;
+                addButton(new GuiNpcButton(15, guiLeft + 180, y += 25, 60, 20, color));
+                addLabel(new GuiNpcLabel(15, "gui.buttonAcceptColour", guiLeft + 4, y + 5));
+                getButton(15).setTextColor(dialog.colourData.getButtonAcceptColour());
+
+                color = Integer.toHexString(dialog.colourData.getButtonRejectColour());
+                while (color.length() < 6)
+                    color = 0 + color;
+                addButton(new GuiNpcButton(16, guiLeft + 180, y += 25, 60, 20, color));
+                addLabel(new GuiNpcLabel(16, "gui.buttonRejectColour", guiLeft + 4, y + 5));
+                getButton(16).setTextColor(dialog.colourData.getButtonRejectColour());
+            }
         }
     }
 
@@ -380,15 +444,60 @@ public class SubGuiNpcDialogVisual extends SubGuiInterface implements ISubGuiLis
                 }
             }
         }
+        if (activeMenu == 4) {
+            if (button.id == 10) {
+                dialog.animationType = EnumDialogAnimationType.values()[button.getValue()];
+            }
+            if (button.id == 11) {
+                setSubGui(new GuiCustomAnimFileSelection(npc, this, (name)->{
+                    dialog.animationFileResLoc = name;
+                    initGui();
+                }));
+            }
+            if (button.id == 12) {
+                setSubGui(new GuiCustomAnimationSelection(npc, this,dialog.animationFileResLoc,
+                        (name)-> dialog.animationName = name));
+            }
+        }
 
+        if (activeMenu == 5) {
+            DialogColourData colData = dialog.colourData;
+            if (button.id == 10) {
+                colData.setEnableColourSettings(button.getValue()==1);
+            }
+            if (button.id == 11) {
+                setSubGui(new SubGuiColorSelector(colData.getLineColour1()));
+                lastColorClicked = 2;
+            }
+            if (button.id == 12) {
+                setSubGui(new SubGuiColorSelector(colData.getLineColour2()));
+                lastColorClicked = 3;
+            }
+            if (button.id == 13) {
+                setSubGui(new SubGuiColorSelector(colData.getLineColour3()));
+                lastColorClicked = 4;
+            }
+            if (button.id == 14) {
+                setSubGui(new SubGuiColorSelector(colData.getSlotColour()));
+                lastColorClicked = 5;
+            }
+            if (button.id == 15) {
+                setSubGui(new SubGuiColorSelector(colData.getButtonAcceptColour()));
+                lastColorClicked = 6;
+            }
+            if (button.id == 16) {
+                setSubGui(new SubGuiColorSelector(colData.getButtonRejectColour()));
+                lastColorClicked = 7;
+            }
+        }
         initGui();
     }
 
     @Override
     public void drawScreen(int i, int j, float f){
-        super.drawScreen(i,j,f);
         for(GuiMenuTopButton button: topButtons)
             button.drawButton(mc, i, j);
+        super.drawScreen(i,j,f);
     }
 
 
@@ -412,6 +521,23 @@ public class SubGuiNpcDialogVisual extends SubGuiInterface implements ISubGuiLis
                 }
                 initGui();
             }
+        }
+        if (activeMenu == 5) {
+            DialogColourData colData = dialog.colourData;
+            if (lastColorClicked == 2) {
+                colData.setLineColour1(((SubGuiColorSelector) subgui).color);
+            } else if (lastColorClicked == 3) {
+                colData.setLineColour2(((SubGuiColorSelector) subgui).color);
+            }else if (lastColorClicked == 4) {
+                colData.setLineColour3(((SubGuiColorSelector) subgui).color);
+            }else if (lastColorClicked == 5) {
+                colData.setSlotColour(((SubGuiColorSelector) subgui).color);
+            }else if (lastColorClicked == 6) {
+                colData.setButtonAcceptColour(((SubGuiColorSelector) subgui).color);
+            }else if (lastColorClicked == 7) {
+                colData.setButtonRejectColour(((SubGuiColorSelector) subgui).color);
+            }
+            initGui();
         }
         save();
     }
