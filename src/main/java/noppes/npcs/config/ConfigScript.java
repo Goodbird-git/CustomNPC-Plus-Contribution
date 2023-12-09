@@ -43,6 +43,8 @@ public class ConfigScript
      **/
     public static Property ScriptingECMA6Property;
     public static boolean ScriptingECMA6 = false;
+    public static Property ScriptingGraalVMProperty;
+    public static boolean ScriptingGraalVM = false;
 
     public static Property ExpandedScriptLimitProperty;
     public static int ExpandedScriptLimit = 2;
@@ -80,6 +82,11 @@ public class ConfigScript
                             "\nEnabling this adds many more features to JS in scripts. Only use if on Java 8 or higher." +
                             "\nNot all ECMA 6 language is supported through this functionality.");
             ScriptingECMA6 = ScriptingECMA6Property.getBoolean(false);
+
+            ScriptingGraalVMProperty = config.get(CUSTOMIZATION, "GraalVM Support", false,
+                    "Enables/Disables the standalone GraalVM JVM support" +
+                            "\nEnabling this only if you are using GraalVM Java");
+            ScriptingGraalVM = ScriptingGraalVMProperty.getBoolean(false);
 
             ExpandedScriptLimitProperty = config.get(CUSTOMIZATION, "Script Tag Limit", 2,
                     "If scripts are too long (>65535 characters), they normally won't be saved in NBT data.\n" +

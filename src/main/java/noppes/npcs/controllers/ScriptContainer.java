@@ -18,6 +18,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.function.Predicate;
 
 public class ScriptContainer {
     private static final String lock = "lock";
@@ -240,6 +241,14 @@ public class ScriptContainer {
                 System.setProperty("nashorn.args", "--language=es6");
             }
             this.engine = ScriptController.Instance.getEngineByName(scriptLanguage.toLowerCase());
+            if(engine!=null && ConfigScript.ScriptingGraalVM) {
+                engine.getBindings(ScriptContext.ENGINE_SCOPE).put("polyglot.js.allowAllAccess", true);
+                engine.getBindings(ScriptContext.ENGINE_SCOPE).put("polyglot.js.allowHostAccess", true);
+                engine.getBindings(ScriptContext.ENGINE_SCOPE).put("polyglot.js.allowHostClassLookup", (Predicate<String>) s -> true);
+                engine.getBindings(ScriptContext.ENGINE_SCOPE).put("polyglot.js.allowHostClassLoading", true);
+                engine.getBindings(ScriptContext.ENGINE_SCOPE).put("polyglot.js.nashorn-compat", true);
+                engine.getBindings(ScriptContext.ENGINE_SCOPE).put("polyglot.js.allowNativeAccess", true);
+            }
             this.evaluated = false;
         }
     }
