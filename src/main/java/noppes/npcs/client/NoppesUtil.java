@@ -19,8 +19,6 @@ import noppes.npcs.api.handler.data.IAnimation;
 import noppes.npcs.client.fx.CustomFX;
 import noppes.npcs.client.gui.player.GuiDialogInteract;
 import noppes.npcs.client.gui.player.GuiQuestCompletion;
-import noppes.npcs.client.gui.player.moderndialog.GuiModernDialogInteract;
-import noppes.npcs.client.gui.player.moderndialog.GuiModernQuestDialog;
 import noppes.npcs.client.gui.util.GuiContainerNPCInterface;
 import noppes.npcs.client.gui.util.GuiNPCInterface;
 import noppes.npcs.client.gui.util.IScrollData;
@@ -311,11 +309,11 @@ public class NoppesUtil {
 				if(entity instanceof EntityCustomModel){
                     if(dialog.animationType!=EnumDialogAnimationType.None){
                         if(dialog.animationType!=EnumDialogAnimationType.Custom){
-                            ((EntityCustomModel) entity).dialogAnim = dialog.animationType.name();
+                            ((EntityCustomModel) entity).setDialogAnim(dialog.animationType.name());
                         }else if(((EntityCustomModel) entity).animResLoc.toString().equals(dialog.animationFileResLoc) &&
                                 GeckoLibCache.getInstance().getAnimations().get(new ResourceLocation(dialog.animationFileResLoc))
                                         .getAnimation(dialog.animationName)!=null){
-                            ((EntityCustomModel) entity).dialogAnim = dialog.animationName;
+                            ((EntityCustomModel) entity).setDialogAnim(dialog.animationName);
                         }
                     }
 				}
@@ -329,16 +327,8 @@ public class NoppesUtil {
                 }
 			}
 		}
-		if(!(gui instanceof GuiDialogInteract) || ClientConfig.useCustomGUIDesign)
-			if(ClientConfig.useCustomGUIDesign){
-				if(dialog.hasQuest()){
-					CustomNpcs.proxy.openGui(player, new GuiModernQuestDialog(npc, dialog.getQuest(),dialog, -2));
-				}else{
-					CustomNpcs.proxy.openGui(player, new GuiModernDialogInteract(npc, dialog));
-				}
-			}else {
-				CustomNpcs.proxy.openGui(player, new GuiDialogInteract(npc, dialog));
-			}
+		if(gui == null || !(gui instanceof GuiDialogInteract))
+			CustomNpcs.proxy.openGui(player, new GuiDialogInteract(npc, dialog));
 		else{
 			GuiDialogInteract dia = (GuiDialogInteract) gui;
 			dia.appendDialog(dialog);

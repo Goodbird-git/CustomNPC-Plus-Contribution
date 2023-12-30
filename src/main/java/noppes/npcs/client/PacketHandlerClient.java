@@ -362,15 +362,6 @@ public class PacketHandlerClient extends PacketHandlerServer{
 		else if(type == EnumPacketClient.STOP_SOUNDS) {
 			ScriptSoundController.Instance.stopAllSounds();
 		}
-		else if(type == EnumPacketClient.SYNC_WEAPON) {
-			Entity entity = Minecraft.getMinecraft().theWorld.getEntityByID(buffer.readInt());
-			if(!(entity instanceof EntityNPCInterface))
-				return;
-			EntityNPCInterface npc = (EntityNPCInterface) entity;
-			int weaponSlotIndex = buffer.readInt();
-			ItemStack stack = ItemStack.loadItemStackFromNBT(Server.readNBT(buffer));
-			npc.inventory.weapons.put(weaponSlotIndex,stack);
-		}
 		else if(type == EnumPacketClient.SYNC_MANUAL_ANIMATIONS) {
 			Entity entity = Minecraft.getMinecraft().theWorld.getEntityByID(buffer.readInt());
 			if(!(entity instanceof EntityCustomNpc)) return;
@@ -378,7 +369,6 @@ public class PacketHandlerClient extends PacketHandlerServer{
 			if(npc.modelData==null || !(npc.modelData.getEntity(npc) instanceof EntityCustomModel)) return;
 			EntityCustomModel entityCustomModel = (EntityCustomModel) npc.modelData.getEntity(npc);
 			entityCustomModel.manualAnim = Server.readAnimBuilder(buffer);
-			entityCustomModel.manualController.markNeedsReload();
 		}
 	}
 }
